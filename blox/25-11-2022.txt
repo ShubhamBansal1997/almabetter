@@ -1,0 +1,321 @@
+mongodump -> dump (export data) in bson
+mongorestore -> import data in bson format
+
+mongoimport -> import data in json format (+ some other format csv)
+mongoexport -> export data in json format
+CRUD
+C -> Create
+R -> Read
+U -> update
+D -> Delete
+
+Query data
+find({})
+
+db.collectionName.find({"name": "Shubham"})
+
+db.collectionName.find() -> output all the documents in 
+the collection
+
+db.collectionName.find({"name": "Shubham"}).count() -> 
+no of documents
+
+
+db.collectionName.find({"name": "Shubham"}).pretty()
+format repsonse
+
+insert() <- outdated
+insertOne()
+insertMany()
+
+db.collectionName.insertOne({
+    'name': 'Shubham'
+})
+db.collectionName.insertMany([
+    {'name': "Shubham"},
+    {'name': "Rohan"},
+    {'name': "soahn"}
+])
+
+
+
+Upate
+updateOne -> only update one record
+updateMany -> update multiple records
+SQL - UPDATE TABLE SET x = 1 (WHERE condition)
+db.collectionName.updateOne(
+    {}, -> condition where ???
+    {
+        $set: {"key": "value"} --> set part here
+    }
+)
+//updateMany
+db.collectionName.updateOne(
+    {"name": "Shubham"},
+    {
+        $set: {"name": "ShubhamNew"}
+    }
+)
+delete -> outdated 
+
+deleteOne <- only delete one record
+deleteMany <- delete multiple records
+
+DELETE FROM table WHERE condition
+db.collectionName.delete(
+    {} <--- condition WHERE
+)
+
+db.collectionName.deleteOne(
+    {} <--- condition WHERE
+)
+
+db.collectionName.deleteOne({
+    "name": "Shubham"
+})
+db.collectionName.deleteMany({
+    "name": "Rohan"
+})
+
+{age: 20} -> 3 records filtered
+            -> deleteOne -> delete one record among them
+            -> deleteMany -> delete all the 3 records
+A 20
+B 21
+C 20
+D 20
+
+
+Pagination
+Indexes in Mongodb
+ - Single Field Index
+ - Compund Indexes
+ - MultiKey Indexes
+Aggregation -> stats
+Student Name |  Marks | Standard
+Pagination
+
+What is page??
+Why we make pages?
+
+Manage Pagination in the frontend - not good approach
+(9000)
+page = 1 -> 0 -20
+page = 2 -> 21 - 40
+page = 3 -> 41 - 60
+backend request -> backend code (9000)  -> database
+
+pagination database level == page = 1 => 0 - 20
+                             page = 2 => 21 - 40
+
+(Backend Code) . (Frontend)
+Server Side and Client Side Pagination is not good
+
+.limit
+.skip 
+
+100 records -> 10 records
+[r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, r11]
+db.collectionName.find().limit(10)
+
+skip
+[r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, r11, r12]
+db.collectionName.find().skip(5)
+
+[r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, r11, r12]
+paginate date - 3 record / documents
+
+base query = db.collectionName.find()
+page - 1 => [r1, r2, r3] -> .limit(3)
+page - 2 => [r4, r5, r6] -> .skip(3).limit(3)
+page - 3 => [r7, r8, r9] -> .skip(6).limit(3)
+page - 4 => [r10, r11, r12] -> .skip(9).limit(3)
+
+filtering = [r1, r2, r5, r6, r7, r9, r10, r11]
+per page = 3 records
+page - 1 => [r1, r2, r5]
+
+
+
+studentCollection 
+no_of_records per page = 20
+
+[r1, r2, r3, r4, r5, r6, r7, r8, r9, r10]
+db.studentCollection.find().limit(20) page 1
+db.studentCollection.find().skip(20).limit(20) page 2
+db.studentCollection.find().skip(40).limit(20) page 3
+
+Client -> (page_no, no_of_records_per_page) -> Server
+
+Server -> skip_value = (page_no - 1) * no_of_records_per_page
+          limit_value = no_of_records_per_page
+if page_no == 0
+    db.collectionName.find().limit(limit_value)
+    [r1, r2, r4, d4]
+else
+    db.collectionName.find().skip(skip_value).limit(limit_value)
+
+Indexing????
+
+In books - to locate pages
+Index contain - partial data which is used to locate the actual data
+
+index - only 10 word word summary - each chapter contains 5000 words
+collection
+[
+    {}, <- chapter
+    {},
+    {}
+] when there is no index <-- 'collection scan' - time taking
+heavy operation
+
+Collection (book)
+[
+    (d1){'chapterName': 'Electochemisrty', 'content': '', ...keys},
+    (d2){'chapterName': 'Organic Chemisty', 'content': '', ...keys},
+    (d3){'chapterName': 'InOrganic Chemisty', 'content': '', ...keys},
+    (d4){'chapterName': 'Physical Chemisty', 'content': '', ...keys},
+]
+
+Index (ChapterName)
+
+Electrochemistry -> d1 ()
+Organic Chemistry -> d2 ()
+InOrganic Chemistry -> d3 ()
+Physical Chemistry -> d4 ()
+
+Index Scan -> fast and light weight
+12 bytes * 
+
+id -> unique index -> 
+
+[
+    {
+        'name': Shubam
+        'age': 25,
+        'gender': male
+    },
+    {
+        'name': Shubam
+        'age': 25,
+        'gender: male
+    },
+]
+db.collectionName.createIndex('field_name')
+db.collectionName.createIndex('name') -> make binary tree
+db.collectionName.createIndex('age')
+
+
+If Indexes are so fast then why not make index over every
+field ???
+
+every index makes a binary tree
+binary tree contains only index field data
+collection have 10 records
+
+name index | age index | gender index
+10 elements | 10 elements | 10 element <- each btree
+
+add more record in the collection
+??
+insertions in all btree -> 
+
+delete one record in collection
+deletions in all btree -> 
+
+insertion | deletion | update -> becomes heavy???
+
+Indexes - present on main memory - primary memory - RAM
+    secondary memory - Hard disk | SSD
+
+Indexes present on RAM
+as the collections increases - index also increase ??
+it will node more RAM
+
+8 gb RAM system
+
+5 index - i-14gb i-24gb i-34gb i-44gb i-54gb
+
+main memory - i-1 | i-2
+second memory - i-3 | i-4 | i-5
+
+Type of Index
+
+Single Field Index
+[
+    {
+        _id: ObjectId(),
+        score: 'adsada', <-- key : value
+        location: { state: 'NY', city: "new york"}
+    }
+]
+db.collectionName.createIndex({ fieldName : 1})
+db.collectionName.createIndex({ fieldName : -1})
+db.collectionName.createIndex({ score : 1})
+db.collectionName.createIndex({ score : -1}) <>
+
+1 -> data is stored in ascending order in the index
+-1 -> data is stored in descending order in the index
+
+Creating a index on the embedded field:
+state -> embedded field
+
+db.collectionName.createIndex({ 'location.state' : -1})
+
+
+db.collectionName.find({ 'location.state': 'Delhi' })
+
+Index on Embedded document
+db.collectionName.createIndex({ location: 1})
+
+{
+    firstName: 'Shubham',
+    lastName: 'Bansal'
+}
+
+db.collectionName.createIndex({ "field1": 1, "field2": 1})
+
+product | quantity | price
+p1 10 400
+p2 20 500
+p3 30 600
+quantity: 1, price: 1
+
+10 -> 600 500 400
+20 -> 600 500 400
+30 -> 600 500 400
+
+10 -> 400 500 600
+20 -> 400 500 600
+30 -> 400 500 600
+
+
+
+MultiKey index
+
+{
+    "_id" : 1, "product" : "Bat", "sizes" : [ "S", "M", "L" ] }
+{ "_id" : 2, "product" : "Hat", "sizes" : [ "S", "L", "XL" ] }
+{ "_id" : 3, "product" : "Cap", "sizes" : [ "M", "L" ] }
+
+db.collectionName.createIndex({sizes: 1})
+
+
+{
+    _id: 1,
+    name: "The Rat",
+    reviews: [{
+        name: "Stanley",
+        date: "04 December, 2020",
+        ordered: "Dinner",
+        rating: 1
+      },
+      {
+        name: "Tom",
+        date: "04 October, 2020",
+        ordered: "Lunch",
+        rating: 2
+      }]
+   },
+
+db.collectionName.createIndex({ reviews.ordered: 1})
